@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function Setup({
   setScreen,
@@ -9,16 +9,28 @@ export default function Setup({
   setBloomLevel,
   mode,
   setMode,
-  setQuiz, darkMode, setDarkMode
+  setQuiz,
+  setQuizId,
+  token,
+  darkMode,
+  setDarkMode,
 }) {
   const [loading, setLoading] = useState(false);
   const [fileLocal, setFileLocal] = useState(null);
   const [youtubeUrl, setYoutubeUrl] = useState("");
-  //const [embedUrl, setEmbedUrl] = useState("");
+  const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
+
+  useEffect(() => {
+    if (!token) {
+      setScreen("login");
+    }
+  }, [token, setScreen]);
+
+  // const [embedUrl, setEmbedUrl] = useState("");
 
   const isValidYouTube = (url) => {
-  return url.includes("youtube.com") || url.includes("youtu.be");
-};
+    return url.includes("youtube.com") || url.includes("youtu.be");
+  };
 
 const getEmbedUrl = (url) => {
   try {
@@ -32,6 +44,12 @@ const getEmbedUrl = (url) => {
 };
 
   const handleUpload = async () => {
+  if (!token) {
+    setScreen("login");
+    return;
+  }
+
+  console.log("TOKEN SENT:", token);
   if (!fileLocal && !youtubeUrl) {
     alert("Upload video OR paste YouTube link!");
     return;
@@ -49,11 +67,12 @@ const getEmbedUrl = (url) => {
   try {
     if (youtubeUrl) {
       res = await fetch(
-        `http://127.0.0.1:8000/process-youtube?qtype=${quizType}&bloom=${bloomLevel}`,
+        `${API_URL}/process-youtube?qtype=${quizType}&bloom=${bloomLevel}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": "Bearer " + token,
           },
           body: JSON.stringify({ url: youtubeUrl }),
         }
@@ -63,9 +82,12 @@ const getEmbedUrl = (url) => {
       formData.append("file", fileLocal);
 
       res = await fetch(
-        `http://127.0.0.1:8000/process-video?qtype=${quizType}&bloom=${bloomLevel}`,
+        `${API_URL}/process-video?qtype=${quizType}&bloom=${bloomLevel}`,
         {
           method: "POST",
+          headers: {
+            "Authorization": "Bearer " + token,
+          },
           body: formData,
         }
       );
@@ -80,6 +102,7 @@ const getEmbedUrl = (url) => {
     }
 
     setQuiz(data.quiz);
+    setQuizId(data.quiz_id);
     setScreen("quiz");
   } catch (err) {
     alert("Something went wrong!");
@@ -91,41 +114,6 @@ const getEmbedUrl = (url) => {
   return (
   <div className={darkMode ? "dark" : ""}>
       <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-500">
-
-    {/* NAVBAR */}
-    <nav className="flex justify-between items-center px-8 py-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md sticky top-0 z-50">
-      <h1
-        onClick={() => setScreen("home")}
-        className="text-xl font-bold text-gray-800 dark:text-white cursor-pointer hover:opacity-80 transition"
-      >
-        🚀 QuizAI
-      </h1>
-
-      <div className="flex gap-4 items-center">
-        {/* Home link */}
-    <button
-      onClick={() => setScreen("home")}
-      className="text-gray-700 dark:text-gray-300 hover:text-blue-500 transition"
-    >
-      Home
-    </button>
-
-        <button
-          onClick={() => setScreen("home")}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all hover:scale-105"
-        >
-          Logout
-        </button>
-
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-700"
-        >
-          {darkMode ? "☀" : "🌙"}
-        </button>
-      </div>
-    </nav>
-
     {/* CENTER CONTAINER */}
     <div className="flex items-center justify-center px-6 py-10 min-h-[calc(100vh-80px)]">
 
@@ -143,7 +131,7 @@ const getEmbedUrl = (url) => {
               1. Select Question Type
             </p>
             <div className="flex flex-wrap gap-2">
-              {["mcq", "truefalse", "fill", "mixed"].map((t) => (
+              {["mcq 📝", "truefalse ✅", "fill ✏️", "mixed ❓"].map((t) => (
                 <button
                   key={t}
                   onClick={() => setQuizType(t)}
@@ -185,7 +173,7 @@ const getEmbedUrl = (url) => {
               3. Select Mode
             </p>
             <div className="flex gap-2">
-              {["learning", "quiz"].map((m) => (
+              {["learning 💡", "quiz ⏱️"].map((m) => (
                 <button
                   key={m}
                   onClick={() => setMode(m)}

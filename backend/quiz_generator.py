@@ -12,73 +12,74 @@ def generate_quiz(transcript, qtype="mcq", bloom="understand", num=5):
     transcript = transcript[:10000]
 
     prompt = f"""
-You are an AI that generates quiz questions.
+You are an expert educator and quiz designer. Your task is to generate high-quality quiz questions based ONLY on the provided text segment.
 
-REQUIREMENTS:
-- Generate {num} questions
-- Question type: {qtype}
-- Bloom's taxonomy level: {bloom}
+CONTEXT:
+This text is a segment from a larger transcript (video or document). 
 
-QUESTION TYPES:
-- mcq → 4 options
-- truefalse → True/False
-- fill → short answer
-- mixed → mix all types
+OBJECTIVES:
+1. Generate EXACTLY {num} questions.
+2. Type: {qtype}
+3. Bloom's Level: {bloom}
+4. Focus on core educational concepts, definitions, and "how/why" explanations.
+5. Avoid questions about the video's presentation style (e.g., "What did the speaker say first?").
+6. Ensure questions are diverse and not redundant.
 
-BLOOM LEVEL GUIDE:
-- remember → factual recall
-- understand → explanation
-- apply → real-world use
-- analyze → compare/contrast
-- evaluate → judgment
-- create → new ideas
+BLOOM'S LEVEL GUIDE (Target Level: {bloom}):
+- Remember: Recall facts, dates, definitions.
+- Understand: Explain ideas or concepts.
+- Apply: Use information in new situations.
+- Analyze: Draw connections among ideas, compare/contrast.
+- Evaluate: Justify a stand or decision.
+- Create: Produce new or original work.
 
-STRICT RULES:
-- Output ONLY valid JSON
-- NO text outside JSON
-- Each question must include:
-  - question
-  - answer
-  - explanation
-  - type
-  - level
-
-FORMAT:
-
+STRICT JSON FORMAT:
+Return ONLY a JSON array of objects. NO markdown formatting, NO extra text.
 [
   {{
-    "question": "string",
-    "options": ["A", "B", "C", "D"],  // only for mcq
-    "answer": "correct answer",
+    "question": "Clear, concise question?",
+    "options": ["Option A", "Option B", "Option C", "Option D"], // ONLY for mcq or mixed
+    "answer": "Correct answer string",
     "type": "mcq / truefalse / fill",
     "level": "{bloom}",
-    "explanation": "short explanation"
+    "explanation": "Briefly explain why the answer is correct based on the text."
   }}
 ]
 
-TEXT:
+TEXT SEGMENT:
 {transcript}
 """
 
     for attempt in range(3):
         try:
+            print("🔥 Calling Gemini ONCE")
+
             response = client.models.generate_content(
                 model="gemini-flash-lite-latest",
                 contents=prompt
             )
 
             content = response.text.strip()
-
-            # 🔥 CLEAN RESPONSE
             content = re.sub(r"```json|```", "", content).strip()
 
             quiz = json.loads(content)
 
-            # ✅ VALIDATION
             if isinstance(quiz, list) and len(quiz) > 0:
                 return quiz
 
         except Exception as e:
+            if "429" in str(e):
+                print("❌ Quota exceeded")
+                return [
+                    {
+                        "question": "Quota exceeded. Try again later.",
+                        "answer": "",
+                        "type": "info",
+                        "level": bloom,
+                        "explanation": "API quota limit reached."
+                    }
+                ]
+
             print("Retrying due to:", e)
             time.sleep(2)
 

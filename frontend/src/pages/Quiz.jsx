@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 export default function Quiz({
   quiz = [],
+  quizId,
   answers = {},
   setAnswers,
   setResult,
@@ -16,7 +17,7 @@ export default function Quiz({
   useEffect(() => {
     setSelectedOption(answers[currentQ] || null);
   }, [currentQ, answers]);
-
+  
   const handleSelect = (option) => {
     setSelectedOption(option);
 
@@ -28,15 +29,17 @@ export default function Quiz({
 
   const handleNext = () => setCurrentQ((prev) => prev + 1);
   const handlePrev = () => setCurrentQ((prev) => prev - 1);
-
+  const token = localStorage.getItem("token");
   const submitQuiz = async () => {
     try {
       const res = await fetch("http://127.0.0.1:8000/evaluate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": "Bearer " + token, 
+          
         },
-        body: JSON.stringify({ answers, quiz }),
+        body: JSON.stringify({ answers, quiz, quiz_id: quizId })
       });
 
       const data = await res.json();
@@ -65,40 +68,6 @@ export default function Quiz({
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-500">
-
-        {/* NAVBAR */}
-        <nav className="flex justify-between items-center px-8 py-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md sticky top-0 z-50">
-          <h1
-            onClick={() => setScreen("home")}
-            className="text-xl font-bold text-gray-800 dark:text-white cursor-pointer hover:opacity-80 transition"
-          >
-            🚀 QuizAI
-          </h1>
-
-          <div className="flex gap-4 items-center">
-            <button
-              onClick={() => setScreen("home")}
-              className="text-gray-700 dark:text-gray-300 hover:text-blue-500 transition"
-            >
-              Home
-            </button>
-
-            <button
-              onClick={() => setScreen("home")}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all hover:scale-105"
-            >
-              Logout
-            </button>
-
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-800"
-            >
-              {darkMode ? "☀" : "🌙"}
-            </button>
-          </div>
-        </nav>
-
         {/* MAIN CONTENT */}
         <div className="max-w-3xl mx-auto px-4 pt-8 pb-16">
 

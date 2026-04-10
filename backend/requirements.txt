@@ -9,4 +9,4 @@ python-jose[cryptography]
 passlib[bcrypt]
 youtube-transcript-api
 yt-dlp
-
+sqlalchemy

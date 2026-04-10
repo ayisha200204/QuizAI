@@ -1,109 +1,91 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function Login({ setScreen, darkMode, setDarkMode }) {
-  const [email, setEmail] = useState("");
+export default function Login({ setScreen, token, setToken, darkMode, setDarkMode }) {
+
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem("token");
+  const API_URL = "http://127.0.0.1:8000";
 
+  // ✅ Auto login if token exists
+  useEffect(() => {
+    if (token && setScreen) {
+      setScreen("home");
+    }
+  }, [token, setScreen]);
+
+  // 🔐 LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (identifier.trim().length < 3) {
+      return setError("Enter valid email or username");
+    }
+
     setLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/login", {
+      const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username: email, password }),
+        body: JSON.stringify({
+          email: identifier,
+          password: password,
+        }),
       });
 
       const data = await res.json();
 
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        setScreen("dashboard");
-      } else {
-        setError("Invalid credentials");
-      }
-    } catch {
-      setError("Server error. Try again.");
-    }
+      if (res.ok && data.access_token) {
 
-    setLoading(false);
+        if (remember) {
+          localStorage.setItem("token", data.access_token);
+        } else {
+          sessionStorage.setItem("token", data.access_token);
+        }
+
+        setToken(data.access_token);
+
+        setScreen("home");
+      } else {
+        setError(data.detail || "Invalid credentials");
+      }
+
+    } catch {
+      setError("Backend not running");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className={darkMode ? "dark" : ""}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-500">
+      <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
 
-        {/* NAVBAR */}
-        <nav className="flex justify-between items-center px-8 py-4 bg-white/70 dark:bg-gray-900/70 backdrop-blur-md shadow-md sticky top-0 z-50">
+        {/* LOGIN FORM */}
+        <div className="flex items-center justify-center px-6 min-h-[calc(100vh-80px)] relative z-10">
 
-  {/* LOGO (Home) */}
-  <h1
-    onClick={() => setScreen("home")}
-    className="text-xl font-bold text-gray-800 dark:text-white cursor-pointer hover:opacity-80 transition"
-  >
-    🚀 QuizAI
-  </h1>
+          <div className="relative w-full max-w-md p-8 rounded-3xl bg-white/30 dark:bg-gray-800/30 backdrop-blur-xl shadow-2xl border border-white/20">
 
-  <div className="flex gap-4 items-center">
-
-    {/* Home link */}
-    <button
-      onClick={() => setScreen("home")}
-      className="text-gray-700 dark:text-gray-300 hover:text-blue-500 transition"
-    >
-      Home
-    </button>
-
-    
-
-            {/* Dashboard if logged in */}
-            {token && (
-              <button
-                onClick={() => setScreen("dashboard")}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-              >
-                Dashboard
-              </button>
+            {loading && (
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-3xl">
+                <div className="animate-spin h-10 w-10 border-4 border-white border-t-transparent rounded-full"></div>
+              </div>
             )}
-
-            {/* Only show Signup (no Login button here) */}
-            {!token && (
-              <button
-                onClick={() => setScreen("signup")}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"
-              >
-                Signup
-              </button>
-            )}
-
-            {/* Dark mode toggle */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 transition"
-            >
-              {darkMode ? "☀" : "🌙"}
-            </button>
-          </div>
-        </nav>
-
-        {/* LOGIN SECTION */}
-        <div className="flex items-center justify-center px-6 min-h-[calc(100vh-80px)]">
-          <div className="w-full max-w-md p-8 rounded-3xl backdrop-blur-xl bg-white/30 dark:bg-gray-800/30 border border-white/20 shadow-2xl transition">
 
             <h2 className="text-3xl font-bold text-center mb-6 text-gray-800 dark:text-white">
-              🔐 Welcome Back
+              Welcome Back
             </h2>
 
             {error && (
-              <div className="bg-red-100 text-red-600 dark:bg-red-200 p-3 rounded mb-4 text-sm">
+              <div className="bg-red-100 text-red-600 p-3 rounded mb-4 text-sm text-center">
                 {error}
               </div>
             )}
@@ -111,29 +93,75 @@ export default function Login({ setScreen, darkMode, setDarkMode }) {
             <form onSubmit={handleLogin} className="space-y-4">
 
               <input
-                type="email"
-                placeholder="Email"
-                className="w-full p-3 rounded-xl border bg-white/70 dark:bg-gray-700 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                type="text"
+                placeholder="Email or Username"
+                disabled={loading}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="w-full p-3 rounded-xl border bg-white/70 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
               />
 
-              <input
-                type="password"
-                placeholder="Password"
-                className="w-full p-3 rounded-xl border bg-white/70 dark:bg-gray-700 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  disabled={loading}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-3 rounded-xl border bg-white/70 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-sm text-gray-500"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    onChange={(e) => setRemember(e.target.checked)}
+                  />
+                  Remember me
+                </label>
+
+                <span
+                  onClick={() => setScreen("forgot")}
+                  className="text-blue-500 cursor-pointer hover:underline"
+                >
+                  Forgot Password?
+                </span>
+              </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:scale-105 transition"
+                className={`w-full py-3 rounded-xl text-white 
+                bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 
+                transition shadow-lg
+                ${loading ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
               >
-                {loading ? "⏳ Logging in..." : "Login"}
+                Login
+              </button>
+
+              {/* GOOGLE LOGIN */}
+              <button
+                type="button"
+                onClick={() => (window.location.href = `${API_URL}/auth/google`)}
+                className="w-full flex items-center justify-center gap-3 py-3 rounded-xl 
+                bg-white text-gray-700 shadow-md hover:shadow-lg 
+                border hover:scale-105 transition-all duration-300"
+              >
+                <img
+                  src="https://www.svgrepo.com/show/475656/google-color.svg"
+                  alt="google"
+                  className="w-5 h-5"
+                />
+                Continue with Google
               </button>
 
             </form>

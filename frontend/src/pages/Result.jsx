@@ -8,46 +8,13 @@ export default function Result({
   darkMode,
   setDarkMode,
 }) {
-  if (!result) return null;
+  if (!result) {
+  return <div>No result available</div>;
+}
 
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-500">
-
-        {/* NAVBAR */}
-        <nav className="flex justify-between items-center px-8 py-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md sticky top-0 z-50">
-          <h1
-            onClick={() => setScreen("home")}
-            className="text-xl font-bold text-gray-800 dark:text-white cursor-pointer hover:opacity-80 transition"
-          >
-            🚀 QuizAI
-          </h1>
-
-          <div className="flex gap-4 items-center">
-            {/* Home link */}
-    <button
-      onClick={() => setScreen("home")}
-      className="text-gray-700 dark:text-gray-300 hover:text-blue-500 transition"
-    >
-      Home
-    </button>
-
-            <button
-              onClick={() => setScreen("home")}
-              className="bg-green-600 hover:bg-green-800 text-white px-4 py-2 rounded-lg transition-all hover:scale-105"
-            >
-              Logout
-            </button>
-
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-800"
-            >
-              {darkMode ? "☀" : "🌙"}
-            </button>
-          </div>
-        </nav>
-
         {/* MAIN CONTENT */}
         <div className="max-w-3xl mx-auto pt-8 px-4 pb-16">
 
@@ -62,7 +29,7 @@ export default function Result({
             </p>
 
             <p className="text-lg text-gray-800 dark:text-gray-300">
-              {result.percentage.toFixed(2)}%
+              {(result?.percentage || 0).toFixed(0)}%
             </p>
 
             <p className="text-lg text-gray-800 dark:text-gray-300">
