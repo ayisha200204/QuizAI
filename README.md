@@ -2,8 +2,6 @@
 
 QuizAI is a powerful tool that transforms learning content from videos (uploads or YouTube links) into interactive quizzes. Using state-of-the-art AI, it transcribes audio, segments core educational content, and generates high-quality questions based on Bloom's Taxonomy.
 
-![QuizAI Dashboard Placeholder](https://via.placeholder.com/1200x600/1a1a2e/ffffff?text=QuizAI+Interactive+Dashboard)
-
 ## ✨ Features
 
 - **🚀 Dual Input Support**: Process local video files or simply paste a YouTube URL.
@@ -88,10 +86,3 @@ QuizAI is a powerful tool that transforms learning content from videos (uploads 
 4.  **Take Quiz**: Answer the generated questions and get instant feedback.
 5.  **Analytics**: View your scores on the dashboard.
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📜 License
-
-This project is licensed under the MIT License.
