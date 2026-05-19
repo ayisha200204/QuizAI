@@ -1,4 +1,5 @@
-import React from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   LineChart,
   Line,
@@ -8,20 +9,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-export default function Dashboard({ setScreen, darkMode }) {
+export default function Dashboard({ setScreen, darkMode, token }){
 
-  const user = {
-    name: "Ayisha",
-    email: "ayisha@email.com",
-  };
+  const [user, setUser] = useState(null);
+  const [stats, setStats] = useState({});
+  const [recentQuizzes, setRecentQuizzes] = useState([]);
 
-  // Recent quizzes
-  const recentQuizzes = [
-    { title: "Computer Science Basics", score: 4, total: 5, date: "Today" },
-    { title: "Networking Intro", score: 3, total: 5, date: "Yesterday" },
-  ];
-
-  // Progress chart data
+  // Progress chart data (can later come from backend)
   const progressData = [
     { quiz: "Quiz 1", score: 60 },
     { quiz: "Quiz 2", score: 70 },
@@ -29,8 +23,35 @@ export default function Dashboard({ setScreen, darkMode }) {
     { quiz: "Quiz 4", score: 78 },
   ];
 
+  useEffect(() => {
+  const savedToken =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
+
+  axios
+    .get("http://localhost:8000/api/dashboard", {
+      headers: {
+        Authorization: `Bearer ${savedToken}`,
+      },
+    })
+    .then((res) => {
+      setUser(res.data.user);
+      setStats(res.data.stats);
+      setRecentQuizzes(res.data.recent_quizzes);
+    })
+    .catch((err) => console.log(err));
+}, []);
+
+  // Loading state
+  if (!user) {
+    return (
+      <div className="text-center mt-20 text-xl">
+        Loading Dashboard...
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-blue-100 to-purple-200 dark:from-gray-900 dark:to-gray-800">
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
@@ -50,9 +71,11 @@ export default function Dashboard({ setScreen, darkMode }) {
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow mb-6 flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-            👋 Welcome, {user.name}
+            👋 Welcome, {user?.name}
           </h2>
-          <p className="text-gray-500 dark:text-gray-300">{user.email}</p>
+          <p className="text-gray-500 dark:text-gray-300">
+            {user?.email}
+          </p>
         </div>
 
         <button
@@ -68,22 +91,30 @@ export default function Dashboard({ setScreen, darkMode }) {
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow text-center">
           <h3 className="text-gray-500">Quizzes Taken</h3>
-          <p className="text-2xl font-bold text-blue-600 mt-2">12</p>
+          <p className="text-2xl font-bold text-blue-600 mt-2">
+            {stats?.quizzes_taken || 0}
+          </p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow text-center">
           <h3 className="text-gray-500">Avg Score</h3>
-          <p className="text-2xl font-bold text-green-600 mt-2">78%</p>
+          <p className="text-2xl font-bold text-green-600 mt-2">
+            {stats?.avg_score || 0}%
+          </p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow text-center">
           <h3 className="text-gray-500">Accuracy</h3>
-          <p className="text-2xl font-bold text-purple-600 mt-2">82%</p>
+          <p className="text-2xl font-bold text-purple-600 mt-2">
+            {stats?.accuracy || 0}%
+          </p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow text-center">
           <h3 className="text-gray-500">Study Streak</h3>
-          <p className="text-2xl font-bold text-orange-500 mt-2">🔥 5 Days</p>
+          <p className="text-2xl font-bold text-orange-500 mt-2">
+            🔥 {stats?.streak || 0} Days
+          </p>
         </div>
 
       </div>
@@ -115,21 +146,29 @@ export default function Dashboard({ setScreen, darkMode }) {
           📚 Recent Quizzes
         </h2>
 
-        {recentQuizzes.map((quiz, i) => (
-          <div
-            key={i}
-            className="flex justify-between items-center border-b py-3 last:border-none"
-          >
-            <div>
-              <p className="text-gray-700 dark:text-gray-300">{quiz.title}</p>
-              <p className="text-sm text-gray-400">{quiz.date}</p>
-            </div>
+        {recentQuizzes.length === 0 ? (
+          <p className="text-gray-500">No quizzes yet</p>
+        ) : (
+          recentQuizzes.map((quiz, i) => (
+            <div
+              key={i}
+              className="flex justify-between items-center border-b py-3 last:border-none"
+            >
+              <div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {quiz.title}
+                </p>
+                <p className="text-sm text-gray-400">
+                  {quiz.date || ""}
+                </p>
+              </div>
 
-            <span className="font-semibold text-blue-600">
-              {quiz.score}/{quiz.total}
-            </span>
-          </div>
-        ))}
+              <span className="font-semibold text-blue-600">
+                {quiz.score}/{quiz.total}
+              </span>
+            </div>
+          ))
+        )}
       </div>
 
     </div>

@@ -131,17 +131,22 @@ const getEmbedUrl = (url) => {
               1. Select Question Type
             </p>
             <div className="flex flex-wrap gap-2">
-              {["mcq 📝", "truefalse ✅", "fill ✏️", "mixed ❓"].map((t) => (
+              {[
+                { label: "MCQ 📝", value: "mcq" },
+                { label: "True/False ✅", value: "truefalse" },
+                { label: "Fill in the blanks ✏️", value: "fill" },
+                { label: "Mixed ❓", value: "mixed" }
+              ].map((t) => (
                 <button
-                  key={t}
-                  onClick={() => setQuizType(t)}
+                  key={t.value}
+                  onClick={() => setQuizType(t.value)}
                   className={`px-4 py-2 rounded-lg border transition ${
-                    quizType === t
+                    quizType === t.value
                       ? "bg-blue-600 text-white"
                       : "bg-gray-100 dark:bg-gray-700 dark:text-white hover:bg-gray-200"
                   }`}
                 >
-                  {t.toUpperCase()}
+                  {t.label}
                 </button>
               ))}
             </div>
@@ -173,7 +178,7 @@ const getEmbedUrl = (url) => {
               3. Select Mode
             </p>
             <div className="flex gap-2">
-              {["learning 💡", "quiz ⏱️"].map((m) => (
+              {["learning", "quiz"].map((m) => (
                 <button
                   key={m}
                   onClick={() => setMode(m)}
@@ -183,7 +188,7 @@ const getEmbedUrl = (url) => {
                       : "bg-gray-100 dark:bg-gray-700 dark:text-white hover:bg-gray-200"
                   }`}
                 >
-                  {m.toUpperCase()}
+                  {m === "learning" ? "LEARNING 💡" : "QUIZ ⏱️"}
                 </button>
               ))}
             </div>

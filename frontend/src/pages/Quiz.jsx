@@ -12,10 +12,10 @@ export default function Quiz({
   setDarkMode,
 }) {
   const [currentQ, setCurrentQ] = useState(0);
-  const [selectedOption, setSelectedOption] = useState(null);
+  const [selectedOption, setSelectedOption] = useState("");
 
   useEffect(() => {
-    setSelectedOption(answers[currentQ] || null);
+    setSelectedOption(answers[currentQ] || "");
   }, [currentQ, answers]);
   
   const handleSelect = (option) => {
@@ -26,7 +26,7 @@ export default function Quiz({
       [currentQ]: option,
     }));
   };
-
+  
   const handleNext = () => setCurrentQ((prev) => prev + 1);
   const handlePrev = () => setCurrentQ((prev) => prev - 1);
   const token = localStorage.getItem("token");
@@ -107,18 +107,29 @@ export default function Quiz({
             {/* OPTIONS */}
             {q.options && Array.isArray(q.options) ? (
               <div className="space-y-3">
-                {q.options.map((opt, i) => {
-                  const isSelected = selectedOption === opt;
+                {q.options.map((opt, i) => {const isSelected =
+  selectedOption?.toString().trim().toLowerCase() ===
+  opt?.toString().trim().toLowerCase();
+                  const isCorrectOption =
+  opt?.toString().trim().toLowerCase() ===
+  q.correct_answer?.toString().trim().toLowerCase();
 
                   return (
                     <div
                       key={i}
                       onClick={() => handleSelect(opt)}
-                      className={`p-3 rounded-lg border cursor-pointer transition-transform duration-200 ease-in-out ${
-  isSelected
-    ? "bg-blue-500 text-white border-blue-600 scale-[1.02] shadow-lg "
-    : "bg-gray-100 dark:bg-gray-700 dark:text-white hover:scale-105 hover:bg-gray-200"
+                      className={`p-3 rounded-lg border cursor-pointer transition ${
+  mode === "learning" && selectedOption !== ""
+    ? isCorrectOption
+      ? "bg-green-500 text-white"
+      : isSelected
+      ? "bg-red-500 text-white"
+      : "bg-gray-200 dark:bg-gray-700"
+    : isSelected
+    ? "bg-blue-500 text-white"
+    : "bg-gray-100 dark:bg-gray-700 hover:scale-105"
 }`}
+
 
 
 

@@ -15,6 +15,7 @@ from transcription import transcribe_audio
 from quiz_generator import generate_quiz
 from auth import router as auth_router
 from segmenter import split_transcript, is_valid_segment, score_segment
+from routes.dashboard import router as dashboard_router
 
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
@@ -28,6 +29,7 @@ UPLOAD_DIR = "../uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app.include_router(auth_router)
+app.include_router(dashboard_router, prefix="/api")
 
 # =========================
 # 🔥 UTILS

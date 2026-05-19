@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 
-export default function Login({ setScreen, token, setToken, darkMode, setDarkMode }) {
+export default function Login({ setScreen, token, setToken, darkMode }) {
+
+  const API_URL = "http://127.0.0.1:8000";
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -9,22 +11,24 @@ export default function Login({ setScreen, token, setToken, darkMode, setDarkMod
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_URL = "http://127.0.0.1:8000";
-
-  // ✅ Auto login if token exists
+  // ✅ AUTO LOGIN IF TOKEN EXISTS
   useEffect(() => {
-    if (token && setScreen) {
+    const savedToken =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+
+    if (savedToken) {
+      setToken(savedToken);
       setScreen("home");
     }
-  }, [token, setScreen]);
+  }, [setToken, setScreen]);
 
-  // 🔐 LOGIN
+  // 🔐 LOGIN FUNCTION
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
     if (identifier.trim().length < 3) {
-      return setError("Enter valid email or username");
+      return setError("Enter valid email");
     }
 
     setLoading(true);
@@ -45,20 +49,26 @@ export default function Login({ setScreen, token, setToken, darkMode, setDarkMod
 
       if (res.ok && data.access_token) {
 
+        // ✅ store token
         if (remember) {
           localStorage.setItem("token", data.access_token);
         } else {
           sessionStorage.setItem("token", data.access_token);
         }
 
-        setToken(data.access_token);
+        // ✅ store user info (from backend)
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
 
+        setToken(data.access_token);
         setScreen("home");
+
       } else {
         setError(data.detail || "Invalid credentials");
       }
 
-    } catch {
+    } catch (err) {
       setError("Backend not running");
     } finally {
       setLoading(false);
@@ -94,7 +104,7 @@ export default function Login({ setScreen, token, setToken, darkMode, setDarkMod
 
               <input
                 type="text"
-                placeholder="Email or Username"
+                placeholder="Email"
                 disabled={loading}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
